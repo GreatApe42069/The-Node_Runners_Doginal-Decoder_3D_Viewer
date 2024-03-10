@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Node Runners Doginal Decoder</title>
+
+    <!-- Link to Google Fonts stylesheet -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Madimi+One&display=swap">
+
+    <style>
+        @font-face {
+            font-family: 'MadimiOne-Regular';
+            src: url('./static/fonts/MadimiOne-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #bannerContainer {
+            position: relative;
+            width: 100%;
+            height: 200px; /* Adjust the height as needed */
+            cursor: pointer;
+        }
+
+        #bannerImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensure the image covers the container */
+        }
+
+        #clickableText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'MadimiOne-Regular', sans-serif;
+            font-size: 24px;
+            color: #fff; /* Adjust the color as needed */
+            text-align: center;
+            cursor: pointer;
+            z-index: 2; /* Ensure the text is above the banner */
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: calc(100% - 200px); /* Adjust the height based on banner height */
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="bannerContainer" onclick="window.open('https://twitter.com/thenoderunners', '_blank')">
+        <img id="bannerImage" src="./static/Banner.jpg" alt="Banner Image">
+        <div id="clickableText">The Node Runners Doginal Decoder</div>
+    </div>
+
+    <canvas id="renderCanvas"></canvas>
+
+    <!-- Babylon.js scripts and loaders -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.serializers.min.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.materials.min.js"></script>
+
+    <!-- 3MF loader script -->
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.extension.3mf.min.js"></script>
+
+    <script>
+        // Your existing Babylon.js script goes here
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+        let currentModel;
+        let scene;
+
+        const createScene = function () {
+            try {
+                scene = new BABYLON.Scene(engine);
+
+                // Camera setup
+                const camera = new BABYLON.ArcRotateCamera("camera", 1.5, 1.5, 14, BABYLON.Vector3.Zero(), scene);
+                camera.attachControl(canvas, true);
+
+                // Light setup
+                const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 5, 3), scene);
+                light.intensity = 2;
+
+                scene.clearColor = new BABYLON.Color4(0.1, 0.1, 0.1, 1); // Dark Satin Gray
+
+                // Load default 3D model (assuming it's a glb file)
+                BABYLON.SceneLoader.ImportMesh("", "./static/", "DefaultModel.glb", scene, function (newMeshes) {
+                    currentModel = newMeshes[0];
+                    // Adjust the scale and position as needed
+                    currentModel.scaling = new BABYLON.Vector3(17, 17, 17);
+                    currentModel.position = new BABYLON.Vector3(-1, -4, 0.5);
+                }, undefined, function (scene, message, exception) {
+                    console.error("Error loading default 3D model:", message, exception);
+                });
+
+                // Enable drag and drop for 3D models
+                canvas.addEventListener("dragover", function (event) {
+                    event.preventDefault();
+                });
+
+                canvas.addEventListener("drop", function (event) {
+                    event.preventDefault();
+                    const file = event.dataTransfer.files[0];
+                    if (file) {
+                        loadModel(file);
+                    }
+                });
+
+                // Enable click to manipulate
+                canvas.addEventListener("click", function (event) {
+                    if (!engine.isPointerLock) {
+                        const pickResult = scene.pick(scene.pointerX, scene.pointerY);
+                        if (pickResult.hit) {
+                            // Toggle pointer lock on click
+                            canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+                            canvas.requestPointerLock();
+                        }
+                    }
+                });
+
+                return scene;
+            } catch (error) {
+                console.error("Error creating scene:", error);
+            }
+        };
+
+        const loadModel = function (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const data = event.target.result;
+
+                // Remove the current model if exists
+                if (currentModel) {
+                    currentModel.dispose();
+                }
+
+                // Determine the file format based on the extension
+                const fileName = file.name.toLowerCase();
+                switch (true) {
+                    case fileName.endsWith(".gltf") || fileName.endsWith(".glb"):
+                        // GLTF model
+                        loadMesh("data:", data, handleModelError("GLTF"));
+                        break;
+
+                    case fileName.endsWith(".obj"):
+                        // OBJ model
+                        loadMesh("data:", data, handleModelError("OBJ"));
+                        break;
+
+                    case fileName.endsWith(".3mf"):
+                        // 3MF model
+                        loadMesh("data:", data, handleModelError("3MF"));
+                        break;
+
+                    case /\.(jfif|jpeg|jpg|png|gif)$/.test(fileName):
+                        // Image file
+                        loadImage(data);
+                        break;
+
+                    default:
+                        handleUnsupportedFormatError(fileName);
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // Function to load 3D models
+        const loadMesh = function (baseUrl, data, errorCallback) {
+            BABYLON.SceneLoader.ImportMesh("", baseUrl, data, scene, function (newMeshes) {
+                currentModel = newMeshes[0];
+                adjustModelPositionAndScaling();
+            }, undefined, errorCallback);
+        };
+
+        // Function to load image files
+        const loadImage = function (data) {
+            const plane = BABYLON.MeshBuilder.CreatePlane("imagePlane", { width: 10, height: 10 }, scene);
+            const material = new BABYLON.StandardMaterial("imageMaterial", scene);
+            material.diffuseTexture = new BABYLON.Texture(data, scene);
+            plane.material = material;
+            plane.position = new BABYLON.Vector3(-1, 0.1, 0.5);
+        };
+
+        // Function to handle unsupported file format error
+        const handleUnsupportedFormatError = function (fileName) {
+            console.error("Unsupported file format:", fileName);
+        };
+
+        // Function to handle model loading errors
+        const handleModelError = function (modelName) {
+            return function (scene, message, exception) {
+                console.error(`Error loading ${modelName} model:`, message, exception);
+            };
+        };
+
+        // Function to adjust model position and scaling
+        const adjustModelPositionAndScaling = function () {
+            // Adjust the scale and position as needed
+            currentModel.scaling = new BABYLON.Vector3(10, 10, 10);
+            currentModel.position = new BABYLON.Vector3(-1, 0.1, 0.5);
+        };
+
+        createScene(); // Initialize the scene
+
+        if (scene) {
+            engine.runRenderLoop(function () {
+                scene.render();
+            });
+
+            window.addEventListener("resize", function () {
+                engine.resize();
+            });
+        }
+    </script>
+</body>
+
+</html>
