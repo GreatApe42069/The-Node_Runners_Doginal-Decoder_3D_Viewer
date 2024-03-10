@@ -63,6 +63,9 @@ Before getting started, make sure you have the following installed:
 
 ## Installation
 
+**Create a Folder Named `3d-view-web-app-main` inside that folder place the `3d-view-web_app.py`, `ReadMe.md` , and `manifest.json` files in it. Also inside that folder Create folders one named `static` , one named `templates` one named `venv` . Now Create a folder named `fonts` inside of the `static` folder. Now Inside of the `static` folder is where banner images, default 3d model and the `fonts` folder goes. Inside `fonts` folder will house the files `OFX.txt`, and `MadimiOne-Regular.ttf` files. Inside of `templates` folder houses `3d-view-web_app_index.html` file to edit script open this file in notepad. Last Folder `venv` we will create 3 folders in it `Include` , `Lib` , and `Scripts` this will also house the file named `pyvenv.cfg`. `Libs` has a bunch of sub folders. `Scripts` has (`activate`, `activate.bat`, `activate.ps1`,`deactivate.bat`,`f2py.exe`, `flask.exe`, `imageio_remove_bin.exe`, `imageio_download_bin.exe`, `pip.exe`, `pip3.12.exe`, `pip3.exe`, `python.exe`, `pythonw.exe`). `Include` is empty for now.**
+
+  
 **Clone the repository to your local machine:**
 
 git clone https://github.com/GreatApe42069/The Node_Runners_Doginal-Decoder_3D_Viewer.git
