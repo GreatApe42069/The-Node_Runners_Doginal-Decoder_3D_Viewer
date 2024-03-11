@@ -1,0 +1,9 @@
+{
+  "web_accessible_resources": [
+    {
+      "resources": ["fonts/MadimiOne-Regular.ttf"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  // other manifest fields...
+}
