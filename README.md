@@ -78,7 +78,7 @@ Before getting started, make sure you have the following installed:
 
 - [stegano] `pip install stegano`
 
-- [trppy] `pip install trippy`
+- [trippy] `pip install trippy`
 
 ## Installation
 
