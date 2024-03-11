@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Node Runners Doginal Decoder</title>
+
+    <!-- Link to Google Fonts stylesheet -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Madimi+One&display=swap">
+
+    <!-- Update the font source to include 'https:' -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato&display=swap">
+
+    <!-- Add 'https://use.fontawesome.com' to the font-src directive -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+
+    <style>
+        @font-face {
+            font-family: 'MadimiOne-Regular';
+            src: url('./static/fonts/MadimiOne-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            position: relative;
+        }
+
+        #bannerContainer {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            cursor: pointer;
+        }
+
+        #bannerImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #clickableText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'MadimiOne-Regular', sans-serif;
+            font-size: 24px;
+            color: #fff;
+            text-align: center;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        #ordinalsWalletButton {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        #ordinalsWalletButton img {
+            width: 30px;
+            height: auto;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: calc(100% - 200px);
+            touch-action: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 3;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.9);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: #fefefe;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Add this CSS to style the input containers */
+        .input-container {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="bannerContainer">
+        <img id="bannerImage" src="./static/Banner.jpg" alt="Banner Image" onclick="openModal()">
+        <div id="clickableText">The Node Runners Doginal Decoder</div>
+        <div id="ordinalsWalletButton" onclick="openModal()">
+            <img src="./static/OrdinalsWalletLogo.png" alt="Ordinals Wallet Logo">
+        </div>
+    </div>
+
+    <canvas id="renderCanvas"></canvas>
+
+    <!-- Babylon.js scripts and loaders -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.serializers.min.js"></script>
+
+    <!-- 3MF loader script -->
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.extension.3mf.min.js"></script>
+
+    <script>
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+        let currentModel;
+        let scene;
+
+        const createScene = function () {
+            try {
+                scene = new BABYLON.Scene(engine);
+
+                const camera = new BABYLON.ArcRotateCamera("camera", 1.5, 1.5, 14, BABYLON.Vector3.Zero(), scene);
+                camera.attachControl(canvas, true);
+
+                const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 5, 3), scene);
+                light.intensity = 2;
+
+                scene.clearColor = new BABYLON.Color4(0.1, 0.1, 0.1, 1);
+
+                BABYLON.SceneLoader.ImportMesh("", "./static/", "DefaultModel.glb", scene, function (newMeshes) {
+                    currentModel = newMeshes[0];
+                    currentModel.scaling = new BABYLON.Vector3(17, 17, 17);
+                    currentModel.position = new BABYLON.Vector3(-1, -4, 0.5);
+                }, undefined, function (scene, message, exception) {
+                    console.error("Error loading default 3D model:", message, exception);
+                });
+
+                canvas.addEventListener("dragover", function (event) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "copy";
+                });
+
+                canvas.addEventListener("drop", function (event) {
+                    event.preventDefault();
+                    const files = event.dataTransfer.files;
+                    if (files.length > 0) {
+                        loadModel(files[0]);
+                    }
+                });
+
+                canvas.addEventListener("click", function (event) {
+                    if (!engine.isPointerLock) {
+                        const pickResult = scene.pick(scene.pointerX, scene.pointerY);
+                        if (pickResult.hit) {
+                            canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+                            canvas.requestPointerLock();
+                        }
+                    }
+                });
+
+                return scene;
+            } catch (error) {
+                console.error("Error creating scene:", error);
+            }
+        };
+
+        const loadModel = async function (file) {
+        const reader = new FileReader();
+
+        reader.onload = async function (event) {
+            const data = event.target.result;
+
+            if (currentModel) {
+                currentModel.dispose();
+            }
+
+            const fileName = file.name.toLowerCase();
+            if (fileName.endsWith(".gltf") || fileName.endsWith(".glb") || fileName.endsWith(".obj") || fileName.endsWith(".3mf")) {
+                try {
+                    // Your existing code for loading 3D models
+                    BABYLON.SceneLoader.ImportMesh("", "data:", data, scene, function (newMeshes) {
+                        currentModel = newMeshes[0];
+                        currentModel.scaling = new BABYLON.Vector3(17, 17, 17);
+                        currentModel.position = new BABYLON.Vector3(-1, -4, 0.5);
+                    }, undefined, function (scene, message, exception) {
+                        console.error("Error loading 3D model:", message, exception);
+                    });
+                } catch (error) {
+                    console.error("Error loading 3D model:", error);
+                }
+            } else if (fileName.endsWith(".jfif") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpg") || fileName.endsWith(".png") || fileName.endsWith(".gif")) {
+                // Your existing code for loading images
+                const imagePlane = BABYLON.MeshBuilder.CreatePlane("imagePlane", { width: 10, height: 10 }, scene);
+                const material = new BABYLON.StandardMaterial("imageMaterial", scene);
+                material.diffuseTexture = new BABYLON.Texture(data, scene);
+                imagePlane.material = material;
+                imagePlane.position = new BABYLON.Vector3(-1, 0.1, 0.5);
+
+                // Make an AJAX request to decode hidden message
+                const hiddenMessage = await decodeHiddenMessage(file.name);
+                if (hiddenMessage) {
+                    alert(`Hidden Message: ${hiddenMessage}`);
+                }
+            } else {
+                console.error("Unsupported file format:", fileName);
+                return;
+            }
+        };
+
+        reader.readAsDataURL(file);
+    };
+
+
+        const decodeHiddenMessage = async function (fileName) {
+        try {
+            const apiUrl = `http://127.0.0.1:5000/decode/${fileName}`;
+
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) {
+                throw new Error(`Decoding request failed with status ${response.status}`);
+            }
+
+            const result = await response.text();
+            return result.trim(); // Assuming the result is a text-based hidden message
+        } catch (error) {
+            console.error("Error decoding hidden message:", error.message);
+            return null;
+        }
+    };
+
+        const openModal = function () {
+            const modal = document.getElementById("ordinalsWalletModal");
+            modal.style.display = "block";
+            canvas.style.pointerEvents = "none";
+        };
+
+        const closeModal = function () {
+            const modal = document.getElementById("ordinalsWalletModal");
+            modal.style.display = "none";
+            canvas.style.pointerEvents = "auto";
+        };
+
+        const checkDogecoinBalance = async (dogecoinAddress) => {
+            try {
+                const apiUrl = `http://127.0.0.1:5000/check-balance?address=${dogecoinAddress}`;
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                console.log(`Dogecoin Address: ${dogecoinAddress}`);
+                console.log(`Balance: ${result.balance} DOGE`);
+            } catch (error) {
+                console.error("Error checking Dogecoin balance:", error.message);
+            }
+        };
+
+        const callApi = function (apiUrl) {
+            console.log("Calling API:", apiUrl);
+
+            // Add Dogecoin balance check for the specific API endpoint
+            if (apiUrl.includes("https://turbo.ordinalswallet.com/wallet/")) {
+                const walletAddress = apiUrl.split("/").pop();
+                checkDogecoinBalance(walletAddress);
+            } else {
+                // Replace with your actual API call logic for other endpoints
+            }
+        };
+
+        createScene();
+
+        if (scene) {
+            engine.runRenderLoop(function () {
+                scene.render();
+            });
+
+            window.addEventListener("resize", function () {
+                engine.resize();
+            });
+        }
+    </script>
+
+    <!-- Modal Container -->
+    <div id="ordinalsWalletModal" class="modal">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Ordinals Wallet Functions</h2>
+
+            <!-- Fetch an Inscription -->
+            <div class="input-container">
+                <label for="inscriptionId">Inscription ID:</label>
+                <input type="text" id="inscriptionId">
+                <button onclick="callApi('https://turbo.ordinalswallet.com/inscription/' + document.getElementById('inscriptionId').value)">Fetch an Inscription</button>
+            </div>
+
+            <!-- Fetch Inscription Location -->
+            <div class="input-container">
+                <label for="inscriptionLocationId">Inscription ID:</label>
+                <input type="text" id="inscriptionLocationId">
+                <button onclick="callApi('https://turbo.ordinalswallet.com/inscription/' + document.getElementById('inscriptionLocationId').value + '/outpoint')">Fetch Inscription Location</button>
+            </div>
+
+            <!-- Fetch Raw Content -->
+            <div class="input-container">
+                <label for="rawContentId">Inscription ID:</label>
+                <input type="text" id="rawContentId">
+                <button onclick="callApi('https://cdn.ordinalswallet.com/inscription/content/' + document.getElementById('rawContentId').value)">Fetch Raw Content</button>
+            </div>
+
+            <!-- Fetch Image Preview -->
+            <div class="input-container">
+                <label for="imagePreviewId">Inscription ID:</label>
+                <input type="text" id="imagePreviewId">
+                <button onclick="callApi('https://cdn.ordinalswallet.com/inscription/preview/' + document.getElementById('imagePreviewId').value)">Fetch Image Preview</button>
+            </div>
+
+            <!-- Fetch a Collection -->
+            <div class="input-container">
+                <label for="collectionSlug">Collection Slug:</label>
+                <input type="text" id="collectionSlug">
+                <button onclick="callApi('https://turbo.ordinalswallet.com/collection/' + document.getElementById('collectionSlug').value)">Fetch a Collection</button>
+            </div>
+
+            <!-- Fetch Collection Stats -->
+            <div class="input-container">
+                <label for="collectionStatsSlug">Collection Slug:</label>
+                <input type="text" id="collectionStatsSlug">
+                <button onclick="callApi('https://turbo.ordinalswallet.com/collection/' + document.getElementById('collectionStatsSlug').value + '/stats')">Fetch Collection Stats</button>
+            </div>
+
+            <!-- Fetch Collection Snapshot -->
+            <div class="input-container">
+                <label for="collectionSnapshotSlug">Collection Slug:</label>
+                <input type="text" id="collectionSnapshotSlug">
+                <button onclick="callApi('https://turbo.ordinalswallet.com/collection/' + document.getElementById('collectionSnapshotSlug').value + '/snapshot')">Fetch Collection Snapshot</button>
+            </div>
+
+            <!-- Wallet Balance -->
+            <div class="input-container">
+                <label for="walletAddress">Wallet Address:</label>
+                <input type="text" id="walletAddress">
+                <button onclick="callApi('https://dogechain.info/api/v1/address/balance/' + document.getElementById('walletAddress').value)">Wallet Balance</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
