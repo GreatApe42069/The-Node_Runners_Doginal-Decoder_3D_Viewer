@@ -40,5 +40,12 @@ def decode():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+# New route for Dogecoin balance check
+@app.route('/check-balance', methods=['GET'])
+def check_balance():
+    # Replace this with your actual Dogecoin balance check logic
+    # For demonstration purposes, it returns a sample balance.
+    return jsonify({'balance': 1000})
+
 if __name__ == '__main__':
     app.run(debug=True)
