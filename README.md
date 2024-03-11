@@ -63,12 +63,28 @@ Before getting started, make sure you have the following installed:
 
 - [Babylon.js] `npm install babylonjs`
 
-- [Flask] `pip install flask`
+- [Flask] 
+
+*Make sure to install the required dependencies first by running:*
+
+- `pip install Flask Flask-CORS stegano Pillow`
+
+*This way, your application-specific code is kept separate from the Flask library code, and you have a clean and organized structure for your project.*
+
+- `pip install flask`
+- `pip install flask_cors`
+- `pip install flask-cors`
+
+
+- [stegano] `pip install stegano`
+
+- [trppy] `pip install trippy`
+
 ## Installation
 
 **Clone the repository to your local machine:**
 
-git clone https://github.com/GreatApe42069/The Node_Runners_Doginal-Decoder_3D_Viewer.git
+git clone https://github.com/GreatApe42069/The_Node_Runners_Doginal-Decoder_3D_Viewer.git
 
 -Navigate to the project directory:
 
@@ -95,7 +111,9 @@ or
 
 or
 
-cd "C:\Users\Ol Soles\3d-view-web-app-main\3d-view-web_app.py"
+`python app.py`
+
+`cd "C:\Users\Ol Soles\3d-view-web-app-main\3d-view-web_app.py"`
 
 This will start your server, and you can access your web page at http://localhost:3000 
 
