@@ -9,6 +9,12 @@
     <!-- Link to Google Fonts stylesheet -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Madimi+One&display=swap">
 
+    <!-- Update the font source to include 'https:' -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato&display=swap">
+
+    <!-- Add 'https://use.fontawesome.com' to the font-src directive -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
+
     <style>
         @font-face {
             font-family: 'MadimiOne-Regular';
@@ -108,6 +114,11 @@
             text-decoration: none;
             cursor: pointer;
         }
+
+        /* Add this CSS to style the input containers */
+        .input-container {
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 
@@ -123,12 +134,12 @@
     <canvas id="renderCanvas"></canvas>
 
     <!-- Babylon.js scripts and loaders -->
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
-<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-<script src="https://cdn.babylonjs.com/loaders/babylonjs.serializers.min.js"></script>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.serializers.min.js"></script>
 
-<!-- 3MF loader script -->
-<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.extension.3mf.min.js"></script>
+    <!-- 3MF loader script -->
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.extension.3mf.min.js"></script>
 
     <script>
         const canvas = document.getElementById("renderCanvas");
@@ -185,17 +196,20 @@
             }
         };
 
-        const loadModel = function (file) {
-            const reader = new FileReader();
-            reader.onload = function (event) {
-                const data = event.target.result;
+        const loadModel = async function (file) {
+        const reader = new FileReader();
 
-                if (currentModel) {
-                    currentModel.dispose();
-                }
+        reader.onload = async function (event) {
+            const data = event.target.result;
 
-                const fileName = file.name.toLowerCase();
-                if (fileName.endsWith(".gltf") || fileName.endsWith(".glb") || fileName.endsWith(".obj") || fileName.endsWith(".3mf")) {
+            if (currentModel) {
+                currentModel.dispose();
+            }
+
+            const fileName = file.name.toLowerCase();
+            if (fileName.endsWith(".gltf") || fileName.endsWith(".glb") || fileName.endsWith(".obj") || fileName.endsWith(".3mf")) {
+                try {
+                    // Your existing code for loading 3D models
                     BABYLON.SceneLoader.ImportMesh("", "data:", data, scene, function (newMeshes) {
                         currentModel = newMeshes[0];
                         currentModel.scaling = new BABYLON.Vector3(17, 17, 17);
@@ -203,18 +217,49 @@
                     }, undefined, function (scene, message, exception) {
                         console.error("Error loading 3D model:", message, exception);
                     });
-                } else if (fileName.endsWith(".jfif") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpg") || fileName.endsWith(".png") || fileName.endsWith(".gif")) {
-                    const plane = BABYLON.MeshBuilder.CreatePlane("imagePlane", { width: 10, height: 10 }, scene);
-                    const material = new BABYLON.StandardMaterial("imageMaterial", scene);
-                    material.diffuseTexture = new BABYLON.Texture(data, scene);
-                    plane.material = material;
-                    plane.position = new BABYLON.Vector3(-1, 0.1, 0.5);
-                } else {
-                    console.error("Unsupported file format:", fileName);
+                } catch (error) {
+                    console.error("Error loading 3D model:", error);
                 }
-            };
-            reader.readAsDataURL(file);
+            } else if (fileName.endsWith(".jfif") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpg") || fileName.endsWith(".png") || fileName.endsWith(".gif")) {
+                // Your existing code for loading images
+                const imagePlane = BABYLON.MeshBuilder.CreatePlane("imagePlane", { width: 10, height: 10 }, scene);
+                const material = new BABYLON.StandardMaterial("imageMaterial", scene);
+                material.diffuseTexture = new BABYLON.Texture(data, scene);
+                imagePlane.material = material;
+                imagePlane.position = new BABYLON.Vector3(-1, 0.1, 0.5);
+
+                // Make an AJAX request to decode hidden message
+                const hiddenMessage = await decodeHiddenMessage(file.name);
+                if (hiddenMessage) {
+                    alert(`Hidden Message: ${hiddenMessage}`);
+                }
+            } else {
+                console.error("Unsupported file format:", fileName);
+                return;
+            }
         };
+
+        reader.readAsDataURL(file);
+    };
+
+
+        const decodeHiddenMessage = async function (fileName) {
+        try {
+            const apiUrl = `http://127.0.0.1:5000/decode/${fileName}`;
+
+            const response = await fetch(apiUrl);
+
+            if (!response.ok) {
+                throw new Error(`Decoding request failed with status ${response.status}`);
+            }
+
+            const result = await response.text();
+            return result.trim(); // Assuming the result is a text-based hidden message
+        } catch (error) {
+            console.error("Error decoding hidden message:", error.message);
+            return null;
+        }
+    };
 
         const openModal = function () {
             const modal = document.getElementById("ordinalsWalletModal");
@@ -228,15 +273,34 @@
             canvas.style.pointerEvents = "auto";
         };
 
-        const callApi = function (apiUrl) {
-            console.log("Calling API:", apiUrl);
-            // Replace with actual API call logic
+        const checkDogecoinBalance = async (dogecoinAddress) => {
+            try {
+                const apiUrl = `http://127.0.0.1:5000/check-balance?address=${dogecoinAddress}`;
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                console.log(`Dogecoin Address: ${dogecoinAddress}`);
+                console.log(`Balance: ${result.balance} DOGE`);
+            } catch (error) {
+                console.error("Error checking Dogecoin balance:", error.message);
+            }
         };
 
-        const adjustModelPositionAndScaling = function () {
-            // Function to adjust the position and scaling of the 3D model if needed
-            currentModel.scaling = new BABYLON.Vector3(17, 17, 17);
-            currentModel.position = new BABYLON.Vector3(-1, -4, 0.5);
+        const callApi = function (apiUrl) {
+            console.log("Calling API:", apiUrl);
+
+            // Add Dogecoin balance check for the specific API endpoint
+            if (apiUrl.includes("https://turbo.ordinalswallet.com/wallet/")) {
+                const walletAddress = apiUrl.split("/").pop();
+                checkDogecoinBalance(walletAddress);
+            } else {
+                // Replace with your actual API call logic for other endpoints
+            }
         };
 
         createScene();
@@ -250,38 +314,6 @@
                 engine.resize();
             });
         }
-    </script>
-    const checkDogecoinBalance = async (dogecoinAddress) => {
-        try {
-            const apiUrl = `"https://your-server-address.com"/check-balance?address=${dogecoinAddress}`;
-            const response = await fetch(apiUrl);
-
-            if (!response.ok) {
-                throw new Error(`API request failed with status ${response.status}`);
-            }
-
-            const result = await response.json();
-
-            console.log(`Dogecoin Address: ${dogecoinAddress}`);
-            console.log(`Balance: ${result.balance} DOGE`);
-        } catch (error) {
-            console.error("Error checking Dogecoin balance:", error.message);
-        }
-    };
-
-    const callApi = function (apiUrl) {
-        console.log("Calling API:", apiUrl);
-
-        // Add Dogecoin balance check for the specific API endpoint
-        if (apiUrl.includes("https://turbo.ordinalswallet.com/wallet/")) {
-            const walletAddress = apiUrl.split("/").pop();
-            checkDogecoinBalance(walletAddress);
-        } else {
-            // Replace with your actual API call logic for other endpoints
-        }
-    };
-
-    // Your existing script code here...
     </script>
 
     <!-- Modal Container -->
@@ -346,13 +378,6 @@
                 <button onclick="callApi('https://dogechain.info/api/v1/address/balance/' + document.getElementById('walletAddress').value)">Wallet Balance</button>
             </div>
         </div>
-
-        <style>
-            /* Add this CSS to style the input containers */
-            .input-container {
-                margin-bottom: 15px;
-            }
-        </style>
     </div>
 </body>
 
