@@ -253,7 +253,7 @@
     </script>
     const checkDogecoinBalance = async (dogecoinAddress) => {
         try {
-            const apiUrl = `http://127.0.0.1:5000/check-balance?address=${dogecoinAddress}`;
+            const apiUrl = `"https://your-server-address.com"/check-balance?address=${dogecoinAddress}`;
             const response = await fetch(apiUrl);
 
             if (!response.ok) {
