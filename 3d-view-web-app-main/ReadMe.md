@@ -61,8 +61,9 @@ Before getting started, make sure you have the following installed:
 
 - [Virtualenv](https://pypi.org/project/virtualenv/)
 
-- [Babylon.js]
+- [Babylon.js] `npm install babylonjs`
 
+- [Flask] `pip install flask`
 ## Installation
 
 **Clone the repository to your local machine:**
