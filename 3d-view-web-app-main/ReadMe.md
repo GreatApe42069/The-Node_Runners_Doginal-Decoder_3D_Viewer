@@ -64,6 +64,11 @@ Before getting started, make sure you have the following installed:
 - [Babylon.js] `npm install babylonjs`
 
 - [Flask] `pip install flask`
+
+- [stegano] `pip install stegano`
+
+- [trppy] `pip install trippy`
+
 ## Installation
 
 **Clone the repository to your local machine:**
@@ -137,66 +142,10 @@ http://127.0.0.1:5000/ to access the 3D Viewer Web App.
 
 -Customize the page title in the HTML template to reflect your app's identity.
 
-**Custom Domain:**
-
--If deploying on a cloud platform, consider setting up a custom domain for your Flask app like on  "Heroku"
-
-***Here's a summary of the next steps:***
 
 **Commit Changes:**
 
 ***Make sure all your changes are committed to Git.***
-
-
-**Download and install the Heroku CLI and logging in before deploying `heroku login`:**
-
--Download and install the Heroku Command Line Interface (CLI) using the following commands:
-
-`curl https://cli-assets.heroku.com/install-heroku.ps1 -UseBasicParsing | Invoke-Expression`
-
-
-*This command downloads and installs the Heroku CLI using PowerShell.*
-
--You can now verify the installation by opening a new PowerShell window and running:
-
-`heroku --version`
-
-
-**Login to Heroku:**
-
--Open your terminal or command prompt and run the following command to log in to your Heroku account:
-
-`heroku login`
-
-*(This command will open a new tab in your web browser, prompting you to log in. Once logged in, return to the terminal.)*
-
-
-**For Windows:**
-
--If you haven't done so already, Navigate to your project directory in the terminal.
-
-Run the following command to create a new Heroku app. You can use the following command in your project directory:
-
-`heroku create your-app-name`
-
-**Push to Heroku:**
-
--Push your code to Heroku with the following command:
-
-`git push heroku master`
-
-**Open the App:**
-
--Once the deployment is successful, open your app in the browser with:
-
-`heroku open`
-
-**Troubleshooting:**
-
--If there are any issues, you can check the logs with:
-
-`heroku logs --tail`
-
 
 ### 3D Viewer Web App Customization:
 
