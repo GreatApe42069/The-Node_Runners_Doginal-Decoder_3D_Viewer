@@ -73,7 +73,7 @@ Before getting started, make sure you have the following installed:
 
 **Clone the repository to your local machine:**
 
-git clone https://github.com/GreatApe42069/The Node_Runners_Doginal-Decoder_3D_Viewer.git
+git clone https://github.com/GreatApe42069/The-Node_Runners_Doginal-Decoder_3D_Viewer.git
 
 -Navigate to the project directory:
 
