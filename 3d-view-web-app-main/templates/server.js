@@ -1,37 +1,38 @@
 const express = require('express');
-const { exec } = require('child_process');
-const path = require('path');
+const fetch = require('node-fetch');
 
 const app = express();
-const port = 5000;
+const port = 5001; // Assuming this is the port where your Express.js server is running
 
-// Serve static files from the 'static' directory
-app.use(express.static(path.join(__dirname, 'static')));
+app.use(express.json()); // Middleware to parse JSON bodies
 
-app.get('/', (req, res) => {
-  res.send('Hello, this is the root path!');
-});
+app.post('/decode/:fileName', async (req, res) => {
+  try {
+    const fileName = req.params.fileName;
+    const imageData = req.body.imageData; // Assuming the image data is sent in the request body
 
-app.get('/decode/:fileName', (req, res) => {
-  const fileName = req.params.fileName;
-  const pythonScriptPath = path.join(__dirname, 'venv', 'Scripts', 'Hidden_Extractor.py');
+    // Make a POST request to the Python server
+    const response = await fetch('http://localhost:5000/decode', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ image: imageData })
+    });
 
-  const command = `python ${pythonScriptPath} ${fileName}`;
-  exec(command, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error executing Python script: ${error.message}`);
-      return res.status(500).send('Internal Server Error');
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
 
-    console.log(`Hidden message decoded: ${stdout}`);
-    res.send(stdout);
-  });
+    const data = await response.json();
+    console.log(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
-// Serve other static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Listen on the specified port
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
