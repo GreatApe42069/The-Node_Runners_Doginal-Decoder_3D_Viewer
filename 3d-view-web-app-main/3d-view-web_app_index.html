@@ -132,9 +132,9 @@
     </div>
 
     <canvas id="renderCanvas"></canvas>
-  
+
     <!-- Include Stegano library -->
-    <script src="https://cdn.jsdelivr.net/npm/stegano/dist/stegano.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stegano/1.0.2/stegano.min.js"></script>
 
     <!-- Babylon.js scripts and loaders -->
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -145,7 +145,7 @@
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.extension.3mf.min.js"></script>
 
     <!-- Stegano library for decoding hidden messages -->
-    <script src="https://cdn.jsdelivr.net/npm/stegano/dist/stegano.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stegano/1.0.2/stegano.min.js"></script>
 
     <script>
         const canvas = document.getElementById("renderCanvas");
@@ -214,6 +214,7 @@
 
                 const fileName = file.name.toLowerCase();
                 if (fileName.endsWith(".gltf") || fileName.endsWith(".glb") || fileName.endsWith(".obj") || fileName.endsWith(".3mf")) {
+                    // Load 3D models
                     try {
                         BABYLON.SceneLoader.ImportMesh("", "data:", data, scene, function (newMeshes) {
                             currentModel = newMeshes[0];
@@ -226,12 +227,14 @@
                         console.error("Error loading 3D model:", error);
                     }
                 } else if (fileName.endsWith(".jfif") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpg") || fileName.endsWith(".png") || fileName.endsWith(".gif")) {
+                    // Load images
                     const imagePlane = BABYLON.MeshBuilder.CreatePlane("imagePlane", { width: 10, height: 10 }, scene);
                     const material = new BABYLON.StandardMaterial("imageMaterial", scene);
                     material.diffuseTexture = new BABYLON.Texture(data, scene);
                     imagePlane.material = material;
                     imagePlane.position = new BABYLON.Vector3(-1, 0.1, 0.5);
 
+                    // Decode hidden message from the image
                     const hiddenMessage = await decodeHiddenMessage(data);
                     if (hiddenMessage) {
                         alert(`Hidden Message: ${hiddenMessage}`);
@@ -245,6 +248,7 @@
             reader.readAsDataURL(file);
         };
 
+        // Add the decodeHiddenMessage function to decode hidden messages from images
         const decodeHiddenMessage = async function (imageData) {
             try {
                 const decodedMessage = Stegano.decode(imageData);
