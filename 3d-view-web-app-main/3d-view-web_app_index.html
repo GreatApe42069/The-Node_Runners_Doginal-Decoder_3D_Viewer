@@ -132,6 +132,9 @@
     </div>
 
     <canvas id="renderCanvas"></canvas>
+  
+    <!-- Include Stegano library -->
+    <script src="https://cdn.jsdelivr.net/npm/stegano/dist/stegano.js"></script>
 
     <!-- Babylon.js scripts and loaders -->
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -140,6 +143,9 @@
 
     <!-- 3MF loader script -->
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.extension.3mf.min.js"></script>
+
+    <!-- Stegano library for decoding hidden messages -->
+    <script src="https://cdn.jsdelivr.net/npm/stegano/dist/stegano.js"></script>
 
     <script>
         const canvas = document.getElementById("renderCanvas");
@@ -209,7 +215,6 @@
                 const fileName = file.name.toLowerCase();
                 if (fileName.endsWith(".gltf") || fileName.endsWith(".glb") || fileName.endsWith(".obj") || fileName.endsWith(".3mf")) {
                     try {
-                        // Your existing code for loading 3D models
                         BABYLON.SceneLoader.ImportMesh("", "data:", data, scene, function (newMeshes) {
                             currentModel = newMeshes[0];
                             currentModel.scaling = new BABYLON.Vector3(17, 17, 17);
@@ -221,15 +226,13 @@
                         console.error("Error loading 3D model:", error);
                     }
                 } else if (fileName.endsWith(".jfif") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpg") || fileName.endsWith(".png") || fileName.endsWith(".gif")) {
-                    // Your existing code for loading images
                     const imagePlane = BABYLON.MeshBuilder.CreatePlane("imagePlane", { width: 10, height: 10 }, scene);
                     const material = new BABYLON.StandardMaterial("imageMaterial", scene);
                     material.diffuseTexture = new BABYLON.Texture(data, scene);
                     imagePlane.material = material;
                     imagePlane.position = new BABYLON.Vector3(-1, 0.1, 0.5);
 
-                    // Make an AJAX request to decode hidden message
-                    const hiddenMessage = await decodeHiddenMessage(file.name);
+                    const hiddenMessage = await decodeHiddenMessage(data);
                     if (hiddenMessage) {
                         alert(`Hidden Message: ${hiddenMessage}`);
                     }
@@ -242,18 +245,10 @@
             reader.readAsDataURL(file);
         };
 
-        const decodeHiddenMessage = async function (fileName) {
+        const decodeHiddenMessage = async function (imageData) {
             try {
-                const apiUrl = `http://127.0.0.1:5000/decode/${fileName}`;
-
-                const response = await fetch(apiUrl);
-
-                if (!response.ok) {
-                    throw new Error(`Decoding request failed with status ${response.status}`);
-                }
-
-                const result = await response.text();
-                return result.trim(); // Assuming the result is a text-based hidden message
+                const decodedMessage = Stegano.decode(imageData);
+                return decodedMessage;
             } catch (error) {
                 console.error("Error decoding hidden message:", error.message);
                 return null;
@@ -293,7 +288,6 @@
         const callApi = function (apiUrl) {
             console.log("Calling API:", apiUrl);
 
-            // Add Dogecoin balance check for the specific API endpoint
             if (apiUrl.includes("https://turbo.ordinalswallet.com/wallet/")) {
                 const walletAddress = apiUrl.split("/").pop();
                 checkDogecoinBalance(walletAddress);
