@@ -1,9 +1,11 @@
 {
-  "web_accessible_resources": [
-    {
-      "resources": ["fonts/MadimiOne-Regular.ttf"],
-      "matches": ["<all_urls>"]
-    }
+  "manifest_version": 2,
+  "name": "Node Runners Doginal Decoder Extension",
+  "version": "1.0",
+  "permissions": [
+    "activeTab"
   ],
-  // other manifest fields...
+  "web_accessible_resources": [
+    "fonts/MadimiOne-Regular.ttf"
+  ]
 }
